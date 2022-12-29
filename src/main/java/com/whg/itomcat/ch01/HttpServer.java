@@ -6,58 +6,45 @@ import java.net.Socket;
 
 public class HttpServer {
 
-    public static void main(String[] args) {
-        new HttpServer().start();
-    }
+    private boolean shutdown;
 
-    public void start() {
+    public void start(int port, int backlog) {
+        ServerSocket server = null;
         try {
-            ServerSocket server = new ServerSocket(8080, 1);
-            while(true){
-                Socket client = server.accept();
-                handler(client);
-            }
+            server = new ServerSocket(port, backlog);
         } catch (IOException e) {
             e.printStackTrace();
+            System.exit(1);
+        }
+
+        while(!shutdown){
+            try {
+                Socket client = server.accept();
+                shutdown = handler(client);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    private void handler(Socket client) throws IOException {
-        BufferedReader reader = new BufferedReader(
-                new InputStreamReader(client.getInputStream()));
-        String line = reader.readLine();
-        while(!isEmpty(line)){
-            System.out.println(line);
-            line = reader.readLine();
-        }
-        System.out.println();
+    private boolean handler(Socket client) throws IOException {
+        InputStream input = client.getInputStream();
+        Request request = new Request(input);
+        request.parse();
+        String uri = request.getUri();
 
-        // String path = Main.class.getResource("").getPath();
-        String path = Thread.currentThread().getContextClassLoader().getResource("").getPath();
-        System.out.println(path);
-        path = path + "whg/test.txt";
-        File file = new File(path);
-        FileInputStream fi = new FileInputStream(file);
-        byte[] fileData = new byte[fi.available()];
-        fi.read(fileData);
-        String fileContent = new String(fileData);
+        OutputStream output = client.getOutputStream();
+        Response response = new Response(output);
+        response.sendStaticResource(uri);
 
-        BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(client.getOutputStream()));
-        writer.write("HTTP/1.1 200 OK");
-        writer.newLine();
-        writer.newLine();
-        // writer.write("Hello, itomcat.");
-        writer.write(fileContent);
-        writer.flush();
-
-        reader.close();
-        writer.close();
+        input.close();
+        output.close();
         client.close();
+        return false;
     }
 
-    private boolean isEmpty(String str){
-        return str == null || str.equals("");
+    public static void main(String[] args) {
+        new HttpServer().start(8080, 1);
     }
 
 }
