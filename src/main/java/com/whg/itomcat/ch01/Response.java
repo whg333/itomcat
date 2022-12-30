@@ -7,6 +7,8 @@ public class Response {
     private static final String lineSeparator = java.security.AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction("line.separator"));
 
+    private static final int BUFFER_SIZE = 1024;
+
     private final OutputStream output;
     private String rootPath;
 
@@ -30,14 +32,21 @@ public class Response {
         // BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(output));
         File file = new File(path);
         if(file.exists()){
-            FileInputStream fi = new FileInputStream(file);
-            byte[] fileData = new byte[fi.available()];
-            fi.read(fileData);
-            fi.close();
-
             output.write(("HTTP/1.1 200 OK"+lineSeparator).getBytes());
             output.write(lineSeparator.getBytes());
-            output.write(fileData);
+
+            FileInputStream fis = new FileInputStream(file);
+            // byte[] fileData = new byte[fis.available()];
+            // fis.read(fileData);
+            // fis.close();
+            byte[] bytes = new byte[BUFFER_SIZE];
+            int ch = fis.read(bytes);
+            while (ch!=-1) {
+                output.write(bytes, 0, ch);
+                ch = fis.read(bytes);
+            }
+
+            // output.write(fileData);
 
             // String fileContent = new String(fileData);
             // writer.write("HTTP/1.1 200 OK");
