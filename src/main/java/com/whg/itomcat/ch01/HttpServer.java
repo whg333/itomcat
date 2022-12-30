@@ -36,11 +36,10 @@ public class HttpServer {
             client.close();
             return;
         }
-        String uri = request.getUri();
 
         OutputStream output = client.getOutputStream();
         Response response = new Response(output);
-        response.sendStaticResource(uri);
+        response.sendStaticResource(request.getUri());
 
         input.close();
         output.close();
