@@ -15,15 +15,19 @@ public class Request {
         this.input = input;
     }
 
-    public void parse() throws IOException {
+    public boolean parse() throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(input));
         String line = reader.readLine();
+        if(line == null){
+            return false;
+        }
         parseUri(line);
 
         while(!isEmpty(line)){
             System.out.println(line);
             line = reader.readLine();
         }
+        return true;
     }
 
     private void parseUri(String line) {

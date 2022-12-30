@@ -6,7 +6,7 @@ import java.net.Socket;
 
 public class HttpServer {
 
-    private boolean shutdown;
+    private boolean shutdown = false;
 
     public void start(int port, int backlog) {
         ServerSocket server = null;
@@ -20,17 +20,22 @@ public class HttpServer {
         while(!shutdown){
             try {
                 Socket client = server.accept();
-                shutdown = handler(client);
+                handler(client);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private boolean handler(Socket client) throws IOException {
+    private void handler(Socket client) throws IOException {
         InputStream input = client.getInputStream();
         Request request = new Request(input);
-        request.parse();
+        boolean parsed = request.parse();
+        if(!parsed){
+            input.close();
+            client.close();
+            return;
+        }
         String uri = request.getUri();
 
         OutputStream output = client.getOutputStream();
@@ -40,7 +45,6 @@ public class HttpServer {
         input.close();
         output.close();
         client.close();
-        return false;
     }
 
     public static void main(String[] args) {
