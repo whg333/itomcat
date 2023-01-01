@@ -40,11 +40,17 @@ public class Response {
                 output.write(bytes, 0, ch);
                 ch = fis.read(bytes);
             }
+        }else if(HttpServer.isShutDown(uri)){
+            String errorMessage = "HTTP/1.1 200 OK" + lineSeparator +
+                    "Content-Type: text/html" + lineSeparator +
+                    lineSeparator +
+                    "<h3><font color=red>Server Shutdown!!!</font></h3>";
+            output.write(errorMessage.getBytes());
         }else{
             String errorMessage = "HTTP/1.1 404 File Not Found" + lineSeparator +
                     "Content-Type: text/html" + lineSeparator +
                     lineSeparator +
-                    "<h3><font color=red>"+uri+"</font> Not Found</h3>";
+                    "<h3><font color=red>"+uri+"</font> Not Found!</h3>";
             output.write(errorMessage.getBytes());
         }
 

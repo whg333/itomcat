@@ -6,6 +6,7 @@ import java.net.Socket;
 
 public class HttpServer {
 
+    private static final String SHUTDOWN = "/SHUTDOWN";
     private boolean shutdown = false;
 
     public void start(int port, int backlog) {
@@ -16,34 +17,43 @@ public class HttpServer {
             e.printStackTrace();
             System.exit(1);
         }
+        System.out.println("Server start on "+port+" ...");
 
         while(!shutdown){
             try {
                 Socket client = server.accept();
-                handler(client);
+                shutdown = handler(client);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        System.out.println("Server stop on "+port+" ...");
     }
 
-    private void handler(Socket client) throws IOException {
+    private boolean handler(Socket client) throws IOException {
         InputStream input = client.getInputStream();
         Request request = new Request(input);
         boolean parsed = request.parse();
         if(!parsed){
             input.close();
             client.close();
-            return;
+            return false;
         }
 
         OutputStream output = client.getOutputStream();
         Response response = new Response(output);
-        response.sendStaticResource(request.getUri());
+        String uri = request.getUri();
+        response.sendStaticResource(uri);
 
         input.close();
         output.close();
         client.close();
+
+        return isShutDown(uri);
+    }
+
+    public static boolean isShutDown(String uri){
+        return uri.equals(SHUTDOWN);
     }
 
     public static void main(String[] args) {
